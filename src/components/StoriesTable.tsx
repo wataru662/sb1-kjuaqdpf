@@ -4,18 +4,18 @@ import { PostMetricsGraph } from './PostMetricsGraph';
 import { PostInsight, ReplySettings, ReplyTiming, ReplyDuration, ReplyLimit, MatchType, ReplyType } from '../types/instagram';
 import { generatePostsCSV, downloadCSV } from '../utils/csvExport';
 
-interface PostsTableProps {
-  posts: PostInsight[];
+interface StoriesTableProps {
+  stories: PostInsight[];
 }
 
 type SortField = 'likes' | 'comments' | 'saves' | 'reach' | 'engagement' | 'posted' | 'likeRate' | 'commentRate' | 'saveRate' | 'followerContribution';
 type SortDirection = 'asc' | 'desc';
 
-export function PostsTable({ posts }: PostsTableProps) {
+export function StoriesTable({ stories }: StoriesTableProps) {
   const [sortField, setSortField] = useState<SortField>('posted');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [selectedPost, setSelectedPost] = useState<PostInsight | null>(null);
-  const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const [selectedStory, setSelectedStory] = useState<PostInsight | null>(null);
+  const [expandedStory, setExpandedStory] = useState<string | null>(null);
   const [showReplySettings, setShowReplySettings] = useState(false);
   const [replySettings, setReplySettings] = useState<ReplySettings>({
     matchText: '',
@@ -50,8 +50,8 @@ export function PostsTable({ posts }: PostsTableProps) {
   };
 
   const handleExportCSV = () => {
-    const csvContent = generatePostsCSV(sortedPosts);
-    downloadCSV(csvContent, `instagram-posts-${new Date().toISOString().split('T')[0]}.csv`);
+    const csvContent = generatePostsCSV(sortedStories);
+    downloadCSV(csvContent, `instagram-stories-${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   const getSortIcon = (field: SortField) => {
@@ -65,7 +65,7 @@ export function PostsTable({ posts }: PostsTableProps) {
     );
   };
 
-  const sortedPosts = [...posts].sort((a, b) => {
+  const sortedStories = [...stories].sort((a, b) => {
     const multiplier = sortDirection === 'asc' ? 1 : -1;
     
     switch (sortField) {
@@ -110,13 +110,13 @@ export function PostsTable({ posts }: PostsTableProps) {
 
   return (
     <div className="relative">
-      {selectedPost && (
+      {selectedStory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full mx-4">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Post Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Story Details</h3>
               <button
-                onClick={() => setSelectedPost(null)}
+                onClick={() => setSelectedStory(null)}
                 className="text-gray-400 hover:text-gray-500"
               >
                 <X className="w-5 h-5" />
@@ -125,9 +125,9 @@ export function PostsTable({ posts }: PostsTableProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <img
-                  src={selectedPost.imageUrl}
-                  alt="Post"
-                  className="w-full aspect-square object-cover rounded-lg"
+                  src={selectedStory.imageUrl}
+                  alt="Story"
+                  className="w-full aspect-[9/16] object-cover rounded-lg"
                 />
               </div>
               <div>
@@ -135,7 +135,7 @@ export function PostsTable({ posts }: PostsTableProps) {
                   <div>
                     <p className="text-sm text-gray-500">Posted on</p>
                     <p className="text-base font-medium">
-                      {new Date(selectedPost.posted).toLocaleDateString(undefined, {
+                      {new Date(selectedStory.posted).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
@@ -145,33 +145,33 @@ export function PostsTable({ posts }: PostsTableProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Likes</p>
-                      <p className="text-lg font-semibold">{selectedPost.likes.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{selectedStory.likes.toLocaleString()}</p>
                       <p className="text-xs text-gray-500">
-                        Rate: {calculateRate(selectedPost.likes, selectedPost.reach)}%
+                        Rate: {calculateRate(selectedStory.likes, selectedStory.reach)}%
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Comments</p>
-                      <p className="text-lg font-semibold">{selectedPost.comments.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{selectedStory.comments.toLocaleString()}</p>
                       <p className="text-xs text-gray-500">
-                        Rate: {calculateRate(selectedPost.comments, selectedPost.reach)}%
+                        Rate: {calculateRate(selectedStory.comments, selectedStory.reach)}%
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Saves</p>
-                      <p className="text-lg font-semibold">{selectedPost.saves.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{selectedStory.saves.toLocaleString()}</p>
                       <p className="text-xs text-gray-500">
-                        Rate: {calculateRate(selectedPost.saves, selectedPost.reach)}%
+                        Rate: {calculateRate(selectedStory.saves, selectedStory.reach)}%
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Reach</p>
-                      <p className="text-lg font-semibold">{selectedPost.reach.toLocaleString()}</p>
+                      <p className="text-lg font-semibold">{selectedStory.reach.toLocaleString()}</p>
                     </div>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Engagement Rate</p>
-                    <p className="text-lg font-semibold">{selectedPost.engagement}%</p>
+                    <p className="text-lg font-semibold">{selectedStory.engagement}%</p>
                   </div>
                 </div>
               </div>
@@ -432,7 +432,7 @@ export function PostsTable({ posts }: PostsTableProps) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-[8.33%] px-3 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 z-10">
-                  <span className="break-words">Post</span>
+                  <span className="break-words">Story</span>
                 </th>
                 {renderSortableHeader('engagement', 'Engagement')}
                 {renderSortableHeader('followerContribution', 'Follower Growth')}
@@ -450,52 +450,52 @@ export function PostsTable({ posts }: PostsTableProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sortedPosts.map((post) => (
-                <React.Fragment key={post.id}>
+              {sortedStories.map((story) => (
+                <React.Fragment key={story.id}>
                   <tr className="hover:bg-gray-50">
                     <td className="px-3 py-8">
                       <div className="flex items-center">
                         <button
-                          onClick={() => setSelectedPost(post)}
+                          onClick={() => setSelectedStory(story)}
                           className="focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg"
                         >
                           <img
-                            src={post.imageUrl}
-                            alt="Post"
+                            src={story.imageUrl}
+                            alt="Story"
                             className="h-24 w-24 object-cover rounded-lg hover:opacity-75 transition-opacity"
                           />
                         </button>
                       </div>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{post.engagement}%</span>
+                      <span className="text-lg">{story.engagement}%</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{calculateFollowerContribution(post.posted)}%</span>
+                      <span className="text-lg">{calculateFollowerContribution(story.posted)}%</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{post.likes.toLocaleString()}</span>
+                      <span className="text-lg">{story.likes.toLocaleString()}</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{calculateRate(post.likes, post.reach)}%</span>
+                      <span className="text-lg">{calculateRate(story.likes, story.reach)}%</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{post.comments.toLocaleString()}</span>
+                      <span className="text-lg">{story.comments.toLocaleString()}</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{calculateRate(post.comments, post.reach)}%</span>
+                      <span className="text-lg">{calculateRate(story.comments, story.reach)}%</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{post.saves.toLocaleString()}</span>
+                      <span className="text-lg">{story.saves.toLocaleString()}</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{calculateRate(post.saves, post.reach)}%</span>
+                      <span className="text-lg">{calculateRate(story.saves, story.reach)}%</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{post.reach.toLocaleString()}</span>
+                      <span className="text-lg">{story.reach.toLocaleString()}</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
-                      <span className="text-lg">{new Date(post.posted).toLocaleDateString()}</span>
+                      <span className="text-lg">{new Date(story.posted).toLocaleDateString()}</span>
                     </td>
                     <td className="px-3 py-8 text-sm text-gray-900 text-center">
                       <div className="flex flex-col gap-2">
@@ -507,10 +507,10 @@ export function PostsTable({ posts }: PostsTableProps) {
                           Reply
                         </button>
                         <button
-                          onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+                          onClick={() => setExpandedStory(expandedStory === story.id ? null : story.id)}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                         >
-                          {expandedPost === post.id ? (
+                          {expandedStory === story.id ? (
                             <>
                               <ChevronUp className="w-4 h-4 mr-2" />
                               Hide
@@ -525,7 +525,7 @@ export function PostsTable({ posts }: PostsTableProps) {
                       </div>
                     </td>
                   </tr>
-                  {expandedPost === post.id && (
+                  {expandedStory === story.id && (
                     <tr>
                       <td colSpan={12} className="bg-gray-50 px-3 py-8">
                         <PostMetricsGraph data={[]} />

@@ -7,8 +7,8 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { TimeSeriesMetric } from '../types/instagram';
-import { Eye, Heart, Users, Activity } from 'lucide-react';
+import { TimeSeriesMetric, PostInsight } from '../types/instagram';
+import { Eye, Heart, Users, Bookmark, UserCircle, Link2, Phone, Image } from 'lucide-react';
 
 interface GrowthBarGraphProps {
   data: TimeSeriesMetric[];
@@ -20,27 +20,30 @@ export function GrowthBarGraph({ data, period }: GrowthBarGraphProps) {
     impressions: true,
     likes: true,
     followers: true,
-    engagement: true
+    saves: true,
+    profileViews: false,
+    websiteClicks: false,
+    contactClicks: false
   });
-
-  // Define consistent colors for metrics
-  const metricColors = {
-    impressions: '#3B82F6', // blue-500
-    likes: '#EC4899',      // pink-500
-    followers: '#10B981',  // emerald-500
-    engagement: '#8B5CF6'  // purple-500
-  };
 
   const calculateGrowthData = () => {
     const growthData = [];
-    const metrics = ['impressions', 'likes', 'followers', 'engagement'] as const;
+    const metrics = [
+      'impressions',
+      'likes',
+      'followers',
+      'saves',
+      'profileViews',
+      'websiteClicks',
+      'contactClicks'
+    ] as const;
     
     const dataPoints = period === 'daily' ? 30 : period === 'weekly' ? 26 : 24;
     const slicedData = data.slice(-dataPoints);
     
     for (let i = 0; i < slicedData.length; i++) {
       const current = slicedData[i];
-      const growth: Record<string, number | string> = {
+      const growth: Record<string, number | string | PostInsight[]> = {
         date: current.date
       };
 
@@ -48,6 +51,9 @@ export function GrowthBarGraph({ data, period }: GrowthBarGraphProps) {
         const dailyMetric = `daily${metric.charAt(0).toUpperCase() + metric.slice(1)}`;
         growth[`${metric}Growth`] = current[dailyMetric];
       });
+
+      // Add posts data
+      growth.posts = current.posts || [];
 
       growthData.push(growth);
     }
@@ -76,29 +82,89 @@ export function GrowthBarGraph({ data, period }: GrowthBarGraphProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
 
+    const posts = payload[0]?.payload.posts as PostInsight[];
+    const hasPosts = posts && posts.length > 0;
+
     return (
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
         <p className="font-medium text-gray-900 mb-2">{formatDate(label)}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill }} />
-            <p className="text-sm">
-              <span className="font-medium" style={{ color: entry.fill }}>
-                {entry.name.replace('Growth', '')}:
-              </span>{' '}
-              {formatValue(entry.value)}
-            </p>
+        {payload.map((entry: any, index: number) => {
+          if (entry.dataKey === 'posts') return null;
+          return (
+            <div key={index} className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.fill }} />
+              <p className="text-sm">
+                <span className="font-medium" style={{ color: entry.fill }}>
+                  {entry.name.replace('Growth', '')}:
+                </span>{' '}
+                {formatValue(entry.value)}
+              </p>
+            </div>
+          );
+        })}
+        {hasPosts && (
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <p className="text-sm font-medium text-gray-900 mb-1">投稿 ({posts.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {posts.map((post) => (
+                <img
+                  key={post.id}
+                  src={post.imageUrl}
+                  alt="Post"
+                  className="w-10 h-10 rounded object-cover"
+                />
+              ))}
+            </div>
           </div>
-        ))}
+        )}
       </div>
     );
   };
 
+  const CustomXAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const date = payload.value;
+    const posts = data.find(d => d.date === date)?.posts || [];
+    const hasPosts = posts.length > 0;
+
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="middle"
+          fill="#666"
+          fontSize={12}
+        >
+          {formatDate(date)}
+        </text>
+        {hasPosts && (
+          <g transform="translate(0,20)">
+            <Image className="w-4 h-4 text-indigo-500" />
+            <text
+              x={8}
+              y={3}
+              textAnchor="start"
+              fill="#6366F1"
+              fontSize={10}
+            >
+              {posts.length}
+            </text>
+          </g>
+        )}
+      </g>
+    );
+  };
+
   const metrics = [
-    { key: 'impressions', name: 'Impressions', color: metricColors.impressions, icon: Eye },
-    { key: 'likes', name: 'Likes', color: metricColors.likes, icon: Heart },
-    { key: 'followers', name: 'Followers', color: metricColors.followers, icon: Users },
-    { key: 'engagement', name: 'Engagement', color: metricColors.engagement, icon: Activity }
+    { key: 'impressions', name: 'Impressions', color: '#3B82F6', icon: Eye },
+    { key: 'likes', name: 'Likes', color: '#EC4899', icon: Heart },
+    { key: 'followers', name: 'Followers', color: '#8B5CF6', icon: Users },
+    { key: 'saves', name: 'Saves', color: '#10B981', icon: Bookmark },
+    { key: 'profileViews', name: 'Profile Views', color: '#F59E0B', icon: UserCircle },
+    { key: 'websiteClicks', name: 'Website Clicks', color: '#6366F1', icon: Link2 },
+    { key: 'contactClicks', name: 'Contact Clicks', color: '#14B8A6', icon: Phone }
   ];
 
   const toggleMetric = (metric: keyof typeof selectedMetrics) => {
@@ -118,10 +184,14 @@ export function GrowthBarGraph({ data, period }: GrowthBarGraphProps) {
     return (
       <button
         onClick={() => toggleMetric(metric)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors`}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          isSelected
+            ? `bg-${color.replace('#', '')} bg-opacity-10 text-${color.replace('#', '')}`
+            : 'bg-gray-100 text-gray-500'
+        }`}
         style={{ 
-          backgroundColor: isSelected ? `${color}1a` : '#f3f4f6',
-          color: isSelected ? color : '#6b7280'
+          backgroundColor: isSelected ? `${color}1a` : undefined,
+          color: isSelected ? color : undefined
         }}
       >
         <Icon className="w-4 h-4" />
@@ -153,12 +223,11 @@ export function GrowthBarGraph({ data, period }: GrowthBarGraphProps) {
         <div className="bg-white rounded-lg p-4">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={growthData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+              <BarChart data={growthData} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
                 <XAxis
                   dataKey="date"
-                  tickFormatter={formatDate}
-                  tick={{ fontSize: 10, fill: '#6B7280' }}
-                  stroke="#E5E7EB"
+                  tick={<CustomXAxisTick />}
+                  height={60}
                   interval="preserveStartEnd"
                 />
                 <YAxis

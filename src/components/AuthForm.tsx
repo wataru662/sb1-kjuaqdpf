@@ -36,8 +36,6 @@ export function AuthForm() {
         if (error) {
           if (error.message === 'Invalid login credentials') {
             throw new Error('メールアドレスまたはパスワードが正しくありません');
-          } else if (error.message === 'Email not confirmed') {
-            throw new Error('メールアドレスが確認されていません。確認メールをご確認ください');
           }
           throw error;
         }
@@ -45,14 +43,13 @@ export function AuthForm() {
         const passwordError = validatePassword(password);
         if (passwordError) {
           setError(passwordError);
+          setLoading(false);
           return;
         }
 
         const { error } = await signUp(email, password);
         if (error) {
-          if (error.message.includes('weak_password')) {
-            throw new Error('パスワードは6文字以上である必要があります');
-          } else if (error.message.includes('User already registered')) {
+          if (error.message.includes('User already registered')) {
             setIsLogin(true);
             throw new Error(
               'このメールアドレスは既に登録されています。ログインしてください。'
@@ -67,7 +64,12 @@ export function AuthForm() {
         setPassword('');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '認証エラーが発生しました');
+      const errorMessage = err instanceof Error ? err.message : '認証エラーが発生しました';
+      setError(errorMessage);
+      // Don't log credential errors to console
+      if (!errorMessage.includes('メールアドレスまたはパスワードが正しくありません')) {
+        console.error('Authentication error:', err);
+      }
     } finally {
       setLoading(false);
     }

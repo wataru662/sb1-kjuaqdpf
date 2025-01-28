@@ -4,6 +4,9 @@ export interface InsightMetrics {
   engagement: number;
   impressions: number;
   reach: number;
+  profileViews: number;
+  websiteClicks: number;
+  contactClicks: number;
 }
 
 export interface PostInsight {
@@ -31,6 +34,10 @@ export interface TimeSeriesMetric {
   likes: number;
   followers: number;
   saves: number;
+  profileViews: number;
+  websiteClicks: number;
+  contactClicks: number;
+  posts?: PostInsight[]; // 追加: その日の投稿一覧
 }
 
 export interface TimeSeriesData {
@@ -46,4 +53,20 @@ export interface InsightData {
   engagementRate: { date: string; rate: number }[];
   comments: Comment[];
   timeSeriesData: TimeSeriesData;
+}
+
+export type ReplyTiming = '1hour' | '3hours' | '6hours' | '12hours';
+export type ReplyDuration = '1day' | '3days' | '7days' | '30days' | 'unlimited';
+export type ReplyLimit = '1' | 'unlimited';
+export type MatchType = 'exact' | 'contains';
+export type ReplyType = 'comment' | 'dm';
+
+export interface ReplySettings {
+  matchText: string;
+  matchType: MatchType;
+  replyText: string;
+  replyType: ReplyType;
+  replyTiming: ReplyTiming;
+  replyDuration: ReplyDuration;
+  replyLimit: ReplyLimit;
 }

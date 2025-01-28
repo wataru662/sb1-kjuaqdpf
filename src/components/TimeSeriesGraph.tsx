@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   LineChart,
   Line,
@@ -8,10 +8,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceLine
 } from 'recharts';
 import { TimeSeriesMetric, PostInsight } from '../types/instagram';
-import { TrendingUp, Heart, Bookmark, Eye, Activity, Users } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { GrowthBarGraph } from './GrowthBarGraph';
 
 type Period = 'daily' | 'weekly' | 'monthly';
@@ -23,20 +22,6 @@ interface TimeSeriesGraphProps {
 
 export function TimeSeriesGraph({ data, posts }: TimeSeriesGraphProps) {
   const [period, setPeriod] = useState<Period>('daily');
-  const [selectedMetrics, setSelectedMetrics] = useState({
-    impressions: true,
-    likes: true,
-    followers: true,
-    engagement: true
-  });
-
-  // Define consistent colors for metrics
-  const metricColors = {
-    impressions: '#3B82F6', // blue-500
-    likes: '#EC4899',      // pink-500
-    followers: '#10B981',  // emerald-500
-    engagement: '#8B5CF6'  // purple-500
-  };
 
   const formatDate = (dateStr: string) => {
     try {
@@ -71,13 +56,8 @@ export function TimeSeriesGraph({ data, posts }: TimeSeriesGraphProps) {
     }
   };
 
-  const formatValue = (value: number, metric?: string) => {
-    if (metric === 'followers') {
-      return value.toLocaleString();
-    }
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-    return value.toString();
+  const formatValue = (value: number) => {
+    return value.toLocaleString();
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -91,18 +71,16 @@ export function TimeSeriesGraph({ data, posts }: TimeSeriesGraphProps) {
     return (
       <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
         <p className="font-medium text-gray-900 mb-2">{formatDate(label)}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {entry.name}: {formatValue(entry.value, entry.name.toLowerCase())}
-          </p>
-        ))}
+        <p className="text-sm text-purple-600">
+          フォロワー数: {formatValue(payload[0]?.value)}
+        </p>
         {matchingPost && (
           <div className="mt-2 pt-2 border-t border-gray-200">
             <div className="flex items-center gap-2">
               <img
                 src={matchingPost.imageUrl}
                 alt="Post"
-                className="w-12 h-12 rounded object-cover"
+                className="w-36 h-36 rounded object-cover"
               />
               <div>
                 <p className="text-xs font-medium text-gray-900">Post published</p>
@@ -117,46 +95,89 @@ export function TimeSeriesGraph({ data, posts }: TimeSeriesGraphProps) {
     );
   };
 
-  const metrics = [
-    { key: 'impressions', name: 'Impressions', color: metricColors.impressions, icon: Eye },
-    { key: 'likes', name: 'Likes', color: metricColors.likes, icon: Heart },
-    { key: 'followers', name: 'Followers', color: metricColors.followers, icon: Users },
-    { key: 'engagement', name: 'Engagement', color: metricColors.engagement, icon: Activity }
-  ];
+  const CustomLegend = () => (
+    <div className="flex flex-wrap items-center gap-4 justify-center mb-4">
+      <div className="flex items-center gap-1">
+        <div
+          className="w-3 h-3"
+          style={{ backgroundColor: '#8B5CF6' }}
+        />
+        <span className="text-sm">フォロワー数</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <div className="w-3 h-3 flex items-center justify-center">
+          <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-transparent border-t-pink-500" />
+        </div>
+        <span className="text-sm">投稿</span>
+      </div>
+    </div>
+  );
 
-  const toggleMetric = (metric: keyof typeof selectedMetrics) => {
-    setSelectedMetrics(prev => ({
-      ...prev,
-      [metric]: !prev[metric]
-    }));
+  const CustomDot = (props: any) => {
+    const { cx, cy, stroke, payload } = props;
+    const hasPost = posts.some(post => {
+      const postDate = new Date(post.posted).toISOString().split('T')[0];
+      return postDate === payload.date;
+    });
+
+    return (
+      <g>
+        <circle 
+          cx={cx} 
+          cy={cy} 
+          r={6} 
+          stroke={stroke} 
+          fill="white" 
+          strokeWidth={3}
+        />
+        {hasPost && (
+          <path
+            d={`M ${cx - 12} ${cy + 24} L ${cx + 12} ${cy + 24} L ${cx} ${cy + 36} Z`}
+            fill="#EC4899"
+          />
+        )}
+      </g>
+    );
   };
 
-  const MetricToggle = ({ metric, name, color, icon: Icon }: { 
-    metric: keyof typeof selectedMetrics;
-    name: string;
-    color: string;
-    icon: typeof Eye;
-  }) => {
-    const isSelected = selectedMetrics[metric];
+  const CustomXAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const date = payload.value;
+    const hasPost = posts.some(post => {
+      const postDate = new Date(post.posted).toISOString().split('T')[0];
+      return postDate === date;
+    });
+
     return (
-      <button
-        onClick={() => toggleMetric(metric)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors`}
-        style={{ 
-          backgroundColor: isSelected ? `${color}1a` : '#f3f4f6',
-          color: isSelected ? color : '#6b7280'
-        }}
-      >
-        <Icon className="w-4 h-4" />
-        {name}
-      </button>
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="middle"
+          fill="#666"
+          fontSize={12}
+        >
+          {formatDate(date)}
+        </text>
+        {hasPost && (
+          <path
+            d="M -12 20 L 12 20 L 0 32 Z"
+            fill="#EC4899"
+            transform="translate(0,2)"
+          />
+        )}
+      </g>
     );
   };
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">Metrics Over Time</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900">フォロワー数推移</h2>
+          <TrendingUp className="w-5 h-5 text-purple-500" />
+        </div>
         <div className="flex flex-wrap gap-2">
           <select
             value={period}
@@ -170,82 +191,31 @@ export function TimeSeriesGraph({ data, posts }: TimeSeriesGraphProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-6">
-        {metrics.map(metric => (
-          <MetricToggle
-            key={metric.key}
-            metric={metric.key as keyof typeof selectedMetrics}
-            name={metric.name}
-            color={metric.color}
-            icon={metric.icon}
-          />
-        ))}
-      </div>
-
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data[period]} margin={{ top: 20, right: 60, left: 20, bottom: 20 }}>
+          <LineChart data={data[period]} margin={{ top: 20, right: 60, left: 20, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              tickFormatter={formatDate}
+              tick={<CustomXAxisTick />}
+              height={80}
             />
             <YAxis
-              yAxisId="metrics"
-              orientation="left"
               tickFormatter={formatValue}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
+              domain={['auto', 'auto']}
+              tick={{ fontSize: 12 }}
             />
             <Tooltip content={<CustomTooltip />} />
-            {selectedMetrics.impressions && (
-              <Line
-                type="monotone"
-                dataKey="impressions"
-                stroke={metricColors.impressions}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 2 }}
-                name="Impressions"
-                yAxisId="metrics"
-              />
-            )}
-            {selectedMetrics.likes && (
-              <Line
-                type="monotone"
-                dataKey="likes"
-                stroke={metricColors.likes}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 2 }}
-                name="Likes"
-                yAxisId="metrics"
-              />
-            )}
-            {selectedMetrics.followers && (
-              <Line
-                type="monotone"
-                dataKey="followers"
-                stroke={metricColors.followers}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 2 }}
-                name="Followers"
-                yAxisId="metrics"
-              />
-            )}
-            {selectedMetrics.engagement && (
-              <Line
-                type="monotone"
-                dataKey="engagement"
-                stroke={metricColors.engagement}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 2 }}
-                name="Engagement"
-                yAxisId="metrics"
-              />
-            )}
+            <Legend content={<CustomLegend />} verticalAlign="top" height={36} />
+            <Line
+              type="monotone"
+              dataKey="followers"
+              stroke="#8B5CF6"
+              strokeWidth={3}
+              dot={<CustomDot />}
+              activeDot={{ r: 8, strokeWidth: 3 }}
+              name="フォロワー数"
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>

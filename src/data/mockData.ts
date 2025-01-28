@@ -10,11 +10,19 @@ function generateTimeSeriesData(days: number, startDate: Date, posts: any[]) {
   let totalLikes = 0;
   let totalSaves = 0;
   let totalImpressions = 0;
+  let totalProfileViews = 0;
+  let totalWebsiteClicks = 0;
+  let totalContactClicks = 0;
   
   for (let i = 0; i < days; i++) {
     const date = new Date(startDate);
     date.setDate(date.getDate() - (days - i - 1));
     const dateStr = date.toISOString().split('T')[0];
+    
+    // その日の投稿を取得
+    const dayPosts = posts.filter(post => 
+      new Date(post.posted).toISOString().split('T')[0] === dateStr
+    );
     
     // If this date has a post, add its metrics to totals
     const hasPost = postDates.has(dateStr);
@@ -27,11 +35,17 @@ function generateTimeSeriesData(days: number, startDate: Date, posts: any[]) {
     const dailyImpressions = Math.floor((12000 + Math.random() * 2000) * (hasPost ? 1.5 : 1));
     const dailyLikes = Math.floor((800 + Math.random() * 200) * (hasPost ? 1.5 : 1));
     const dailySaves = Math.floor((50 + Math.random() * 10) * (hasPost ? 1.5 : 1));
+    const dailyProfileViews = Math.floor((200 + Math.random() * 50) * (hasPost ? 1.5 : 1));
+    const dailyWebsiteClicks = Math.floor((30 + Math.random() * 10) * (hasPost ? 1.5 : 1));
+    const dailyContactClicks = Math.floor((5 + Math.random() * 3) * (hasPost ? 1.5 : 1));
     
     // Update running totals
     totalImpressions += dailyImpressions;
     totalLikes += dailyLikes;
     totalSaves += dailySaves;
+    totalProfileViews += dailyProfileViews;
+    totalWebsiteClicks += dailyWebsiteClicks;
+    totalContactClicks += dailyContactClicks;
 
     // Add both cumulative and daily data
     data.push({
@@ -41,11 +55,19 @@ function generateTimeSeriesData(days: number, startDate: Date, posts: any[]) {
       impressions: totalImpressions,
       likes: totalLikes,
       saves: totalSaves,
-      // Daily values for the bottom graph (these will be used by GrowthBarGraph)
+      profileViews: totalProfileViews,
+      websiteClicks: totalWebsiteClicks,
+      contactClicks: totalContactClicks,
+      // Daily values for the bottom graph
       dailyImpressions,
       dailyLikes,
       dailyFollowers: dailyFollowerGrowth,
-      dailySaves
+      dailySaves,
+      dailyProfileViews,
+      dailyWebsiteClicks,
+      dailyContactClicks,
+      // その日の投稿一覧を追加
+      posts: dayPosts
     });
   }
   return data;
@@ -103,7 +125,10 @@ export const mockInsightData: InsightData = {
     followersGrowth: 5.2,
     engagement: 4.8,
     impressions: 128750,
-    reach: 98234
+    reach: 98234,
+    profileViews: 3456,
+    websiteClicks: 234,
+    contactClicks: 89
   },
   recentPosts,
   weeklyGrowth: [

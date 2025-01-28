@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Heart, Eye, Activity, Calendar, Clock, Sparkles, TrendingUp, TrendingDown, Users } from 'lucide-react';
+import { Trophy, Heart, Eye, Activity, Calendar, Clock, Sparkles, TrendingUp, TrendingDown } from 'lucide-react';
 import { PostInsight } from '../types/instagram';
 
 interface FunStatsProps {
@@ -21,9 +21,8 @@ export function FunStats({ posts }: FunStatsProps) {
       likes: acc.likes + post.likes,
       impressions: acc.impressions + post.reach,
       engagement: acc.engagement + post.engagement,
-      followers: 24892, // Current followers from mockData
       postCount: acc.postCount + 1
-    }), { likes: 0, impressions: 0, engagement: 0, followers: 0, postCount: 0 });
+    }), { likes: 0, impressions: 0, engagement: 0, postCount: 0 });
 
   const previousMonthStats = posts
     .filter(post => {
@@ -34,9 +33,8 @@ export function FunStats({ posts }: FunStatsProps) {
       likes: acc.likes + post.likes,
       impressions: acc.impressions + post.reach,
       engagement: acc.engagement + post.engagement,
-      followers: 24200, // Previous month followers from mockData
       postCount: acc.postCount + 1
-    }), { likes: 0, impressions: 0, engagement: 0, followers: 0, postCount: 0 });
+    }), { likes: 0, impressions: 0, engagement: 0, postCount: 0 });
 
   const calculateChange = (current: number, previous: number) => {
     return previous > 0 ? ((current - previous) / previous) * 100 : 100;
@@ -48,7 +46,6 @@ export function FunStats({ posts }: FunStatsProps) {
     currentMonthStats.engagement / (currentMonthStats.postCount || 1),
     previousMonthStats.engagement / (previousMonthStats.postCount || 1)
   );
-  const followersChange = calculateChange(currentMonthStats.followers, previousMonthStats.followers);
 
   // Calculate best posting time
   const postTimes = posts.map(post => new Date(post.posted).getHours());
@@ -61,7 +58,7 @@ export function FunStats({ posts }: FunStatsProps) {
     .sort(([,a], [,b]) => b - a)[0][0];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {/* Monthly Love */}
       <div className="bg-gradient-to-br from-pink-50 to-red-50 rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
@@ -88,35 +85,6 @@ export function FunStats({ posts }: FunStatsProps) {
         </div>
         <p className="text-sm text-gray-600 mt-1">
           vs. previous month ({previousMonthStats.likes.toLocaleString()} likes)
-        </p>
-      </div>
-
-      {/* Monthly Followers */}
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <Users className="w-6 h-6 text-emerald-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">Followers</h3>
-          </div>
-          <Sparkles className="w-5 h-5 text-emerald-400" />
-        </div>
-        <div className="text-3xl font-bold text-emerald-600 mb-2">
-          {currentMonthStats.followers.toLocaleString()}
-        </div>
-        <div className="flex items-center gap-2">
-          {followersChange > 0 ? (
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
-          ) : (
-            <TrendingDown className="w-4 h-4 text-red-500" />
-          )}
-          <p className={`text-sm font-medium ${followersChange > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {Math.abs(followersChange).toFixed(1)}% {followersChange > 0 ? 'increase' : 'decrease'}
-          </p>
-        </div>
-        <p className="text-sm text-gray-600 mt-1">
-          vs. previous month ({previousMonthStats.followers.toLocaleString()} followers)
         </p>
       </div>
 
